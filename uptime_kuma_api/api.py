@@ -2169,6 +2169,7 @@ class UptimeKumaApi(object):
         status_page = self.get_status_page(slug)
         status_page.pop("incident", None)
         status_page.pop("maintenanceList")
+        status_page.pop("autoRefreshInterval")
         status_page.update(kwargs)
         data = self._build_status_page_data(**status_page)
         r = self._call('saveStatusPage', data)
