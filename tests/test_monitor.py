@@ -1,3 +1,4 @@
+import time
 import unittest
 from packaging.version import parse as parse_version
 
