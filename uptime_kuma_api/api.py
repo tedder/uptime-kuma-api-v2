@@ -1372,7 +1372,7 @@ class UptimeKumaApi(object):
             }
         """
         with self.wait_for_event(Event.MONITOR_LIST):
-            if id_ not in [i["id"] for i in self.get_monitors()]:
+            if int(id_) not in [i["id"] for i in self.get_monitors()]:
                 raise UptimeKumaException("monitor does not exist")
             return self._call('deleteMonitor', id_)
 
