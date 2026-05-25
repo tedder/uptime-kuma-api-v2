@@ -407,7 +407,7 @@ class UptimeKumaApi(object):
 
     Import UptimeKumaApi from the library and specify the Uptime Kuma server url (e.g. 'http://127.0.0.1:3001'), username and password to initialize the connection.
 
-        >>> from uptime_kuma_api import UptimeKumaApi
+        >>> from uptime_kuma_api import UptimeKumaApi, MonitorType
         >>> api = UptimeKumaApi('INSERT_URL')
         >>> api.login('INSERT_USERNAME', 'INSERT_PASSWORD')
         {
@@ -435,7 +435,7 @@ class UptimeKumaApi(object):
 
     .. code-block:: python
 
-        from uptime_kuma_api import UptimeKumaApi
+        from uptime_kuma_api import UptimeKumaApi, MonitorType
 
         with UptimeKumaApi('INSERT_URL') as api:
             api.login('INSERT_USERNAME', 'INSERT_PASSWORD')
@@ -1519,6 +1519,7 @@ class UptimeKumaApi(object):
 
         Example::
 
+            >>> from uptime_kuma_api import MonitorType
             >>> api.add_monitor(
             ...     type=MonitorType.HTTP,
             ...     name="Google",

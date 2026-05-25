@@ -58,7 +58,7 @@ At the end, the connection to the API must be disconnected so that the program d
 With a context manager, the disconnect method is called automatically:
 
 ```python
-from uptime_kuma_api import UptimeKumaApi
+from uptime_kuma_api import UptimeKumaApi, MonitorType
 
 with UptimeKumaApi('INSERT_URL') as api:
     api.login('INSERT_USERNAME', 'INSERT_PASSWORD')
