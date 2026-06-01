@@ -24,12 +24,14 @@ class TestNotification(UptimeKumaTestCase):
 
         # add notification
         r = self.api.add_notification(**expected_notification)
-        self.assertEqual(r["msg"], "Saved")
+        self.assertIn(r["msg"], ["Saved", "Saved."])
         notification_id = r["id"]
 
         # get notification
         notification = self.api.get_notification(notification_id)
-        self.compare(notification, expected_notification)
+        # applyExisting is write-only and not persisted in v2
+        compare_notification = {k: v for k, v in expected_notification.items() if k != "applyExisting"}
+        self.compare(notification, compare_notification)
 
         # get notifications
         notifications = self.api.get_notifications()
@@ -37,7 +39,7 @@ class TestNotification(UptimeKumaTestCase):
         notification = self.find_by_id(notifications, notification_id)
         self.assertTrue(type(notification["type"]) == NotificationType)
         self.assertIsNotNone(notification)
-        self.compare(notification, expected_notification)
+        self.compare(notification, compare_notification)
 
         # edit notification
         expected_notification["name"] = "notification 1 new"
@@ -48,14 +50,14 @@ class TestNotification(UptimeKumaTestCase):
         del expected_notification["telegramChatID"]
         del expected_notification["telegramBotToken"]
         r = self.api.edit_notification(notification_id, **expected_notification)
-        self.assertEqual(r["msg"], "Saved")
+        self.assertIn(r["msg"], ["Saved", "Saved."])
         notification = self.api.get_notification(notification_id)
         self.compare(notification, expected_notification)
         self.assertIsNone(notification.get("pushAPIKey"))
 
         # delete notification
         r = self.api.delete_notification(notification_id)
-        self.assertEqual(r["msg"], "Deleted")
+        self.assertIn(r["msg"], ["Deleted", "successDeleted"])
         with self.assertRaises(UptimeKumaException):
             self.api.delete_notification(notification_id)
 

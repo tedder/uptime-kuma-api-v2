@@ -41,10 +41,13 @@ class UptimeKumaTestCase(unittest.TestCase):
 
         global token
         if not token:
-            if self.api.need_setup():
-                self.api.setup(self.username, self.password)
-            r = self.api.login(self.username, self.password)
+            # Use a longer timeout for the initial connection to a fresh server
+            init_api = UptimeKumaApi(self.url, timeout=30)
+            if init_api.need_setup():
+                init_api.setup(self.username, self.password)
+            r = init_api.login(self.username, self.password)
             token = r["token"]
+            init_api.disconnect()
 
         self.api.login_by_token(token)
 
