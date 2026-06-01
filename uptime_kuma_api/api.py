@@ -506,6 +506,8 @@ class UptimeKumaApi(object):
         self.sio.on(Event.INIT_SERVER_TIMEZONE, self._event_init_server_timezone)
         self.sio.on(Event.MAINTENANCE_LIST, self._event_maintenance_list)
         self.sio.on(Event.API_KEY_LIST, self._event_api_key_list)
+        self.sio.on(Event.UPDATE_MONITOR_INTO_LIST, self._event_update_monitor_into_list)
+        self.sio.on(Event.DELETE_MONITOR_FROM_LIST, self._event_delete_monitor_from_list)
 
         self.connect()
 
@@ -561,6 +563,15 @@ class UptimeKumaApi(object):
 
     def _event_monitor_list(self, data) -> None:
         self._event_data[Event.MONITOR_LIST] = data
+
+    def _event_update_monitor_into_list(self, data) -> None:
+        if self._event_data[Event.MONITOR_LIST] is None:
+            self._event_data[Event.MONITOR_LIST] = {}
+        self._event_data[Event.MONITOR_LIST].update(data)
+
+    def _event_delete_monitor_from_list(self, monitor_id) -> None:
+        if self._event_data[Event.MONITOR_LIST] is not None:
+            self._event_data[Event.MONITOR_LIST].pop(str(monitor_id), None)
 
     def _event_notification_list(self, data) -> None:
         self._event_data[Event.NOTIFICATION_LIST] = data
@@ -790,12 +801,18 @@ class UptimeKumaApi(object):
             kafkaProducerSsl: bool = False,
             kafkaProducerAllowAutoTopicCreation: bool = False,
             kafkaProducerSaslOptions: dict = None,
+
+            # v2+
+            conditions: list = None,
     ) -> dict:
         if accepted_statuscodes is None:
             accepted_statuscodes = ["200-299"]
 
         if notificationIDList is None:
             notificationIDList = {}
+
+        if conditions is None:
+            conditions = []
 
         data = {
             "type": type,
@@ -813,6 +830,11 @@ class UptimeKumaApi(object):
         if parse_version(self.version) >= parse_version("1.22"):
             data.update({
                 "parent": parent,
+            })
+
+        if parse_version(self.version) >= parse_version("2.0"):
+            data.update({
+                "conditions": conditions,
             })
 
         if type in [MonitorType.KEYWORD, MonitorType.GRPC_KEYWORD]:
@@ -1055,7 +1077,12 @@ class UptimeKumaApi(object):
             showCertificateExpiry: bool = False,
 
             icon: str = "/icon.svg",
-            publicGroupList: list = None
+            publicGroupList: list = None,
+
+            # v2+ returned fields that should be ignored on save
+            autoRefreshInterval: int = None,
+            maintenanceList: list = None,
+            **kwargs,
     ) -> tuple[str, dict, str, list]:
         if not theme:
             if parse_version(self.version) >= parse_version("1.22"):
@@ -1087,6 +1114,10 @@ class UptimeKumaApi(object):
             config.update({
                 "showCertificateExpiry": showCertificateExpiry,
             })
+        if parse_version(self.version) >= parse_version("2.0"):
+            # v2 uses analyticsType instead of googleAnalyticsId; send null to pass validation
+            config.pop("googleAnalyticsId", None)
+            config["analyticsType"] = None
         return slug, config, icon, publicGroupList
 
     # monitor
@@ -2010,13 +2041,21 @@ class UptimeKumaApi(object):
         config = r1["config"]
         config.update(r2["config"])
 
+        # v1 returns "incident" (single), v2 returns "incidents" (list of active incidents)
+        if "incidents" in r2:
+            incidents = r2["incidents"]
+            incident = incidents[0] if incidents else None
+        else:
+            incident = r2.get("incident")
+
         data = {
             **config,
-            "incident": r2["incident"],
+            "incident": incident,
             "publicGroupList": r2["publicGroupList"],
             "maintenanceList": r2["maintenanceList"]
         }
-        parse_incident_style(data["incident"])
+        if data["incident"]:
+            parse_incident_style(data["incident"])
         # convert sendUrl from int to bool
         for i in data["publicGroupList"]:
             for j in i["monitorList"]:
@@ -2128,7 +2167,7 @@ class UptimeKumaApi(object):
             }
         """
         status_page = self.get_status_page(slug)
-        status_page.pop("incident")
+        status_page.pop("incident", None)
         status_page.pop("maintenanceList")
         status_page.update(kwargs)
         data = self._build_status_page_data(**status_page)

@@ -40,21 +40,23 @@ class TestStatusPage(UptimeKumaTestCase):
 
         # add status page
         r = self.api.add_status_page(slug, expected_status_page["title"])
-        self.assertEqual(r["msg"], "OK!")
+        self.assertIn(r["msg"], ["OK!", "successAdded"])
 
         # save status page
         self.api.save_status_page(**expected_status_page)
 
-        # get status page
+        # get status page (exclude googleAnalyticsId — v2 uses analyticsType instead)
         status_page = self.api.get_status_page(slug)
-        self.compare(status_page, expected_status_page)
+        compare_status_page = {k: v for k, v in expected_status_page.items() if k != "googleAnalyticsId"}
+        self.compare(status_page, compare_status_page)
 
         # get status pages
         status_pages = self.api.get_status_pages()
         status_page = self.find_by_id(status_pages, slug, "slug")
         self.assertIsNotNone(status_page)
         # publicGroupList and incident is not available in status pages
-        expected_status_page_config = {i: expected_status_page[i] for i in expected_status_page if i != "publicGroupList"}
+        skip_fields = {"publicGroupList", "googleAnalyticsId"}
+        expected_status_page_config = {i: expected_status_page[i] for i in expected_status_page if i not in skip_fields}
         self.compare(status_page, expected_status_page_config)
 
         # edit status page
@@ -62,7 +64,8 @@ class TestStatusPage(UptimeKumaTestCase):
         expected_status_page["theme"] = "dark"
         self.api.save_status_page(**expected_status_page)
         status_page = self.api.get_status_page(slug)
-        self.compare(status_page, expected_status_page)
+        compare_status_page = {k: v for k, v in expected_status_page.items() if k != "googleAnalyticsId"}
+        self.compare(status_page, compare_status_page)
 
         # pin incident
         incident_expected = {

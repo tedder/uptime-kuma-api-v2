@@ -3,6 +3,7 @@ from urllib import parse
 
 import pyotp
 
+import uptime_kuma_test_case
 from uptime_kuma_test_case import UptimeKumaTestCase
 
 
@@ -36,7 +37,7 @@ class Test2FA(UptimeKumaTestCase):
 
         # save 2fa
         r = self.api.save_2fa(self.password)
-        self.assertEqual(r["msg"], "2FA Enabled.")
+        self.assertIn(r["msg"], ["2FA Enabled.", "2faEnabled"])
 
         # check 2fa is enabled
         r = self.api.twofa_status()
@@ -45,11 +46,13 @@ class Test2FA(UptimeKumaTestCase):
         # relogin using the totp token
         self.api.logout()
         token = generate_token(secret)
-        self.api.login(self.username, self.password, token)
+        r = self.api.login(self.username, self.password, token)
+        # update global token so subsequent tests aren't invalidated
+        uptime_kuma_test_case.token = r["token"]
 
         # disable 2fa
         r = self.api.disable_2fa(self.password)
-        self.assertEqual(r["msg"], "2FA Disabled.")
+        self.assertIn(r["msg"], ["2FA Disabled.", "2faDisabled"])
 
 
 if __name__ == '__main__':

@@ -20,3 +20,5 @@ class Event(str, Enum):
     INIT_SERVER_TIMEZONE = "initServerTimezone"
     MAINTENANCE_LIST = "maintenanceList"
     API_KEY_LIST = "apiKeyList"
+    UPDATE_MONITOR_INTO_LIST = "updateMonitorIntoList"
+    DELETE_MONITOR_FROM_LIST = "deleteMonitorFromList"

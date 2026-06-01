@@ -1,6 +1,7 @@
 import json
 import unittest
 
+import uptime_kuma_test_case
 from uptime_kuma_test_case import UptimeKumaTestCase
 
 
@@ -23,11 +24,11 @@ class TestSettings(UptimeKumaTestCase):
 
         # set settings
         r = self.api.set_settings(self.password, **expected_settings)
-        self.assertEqual(r["msg"], "Saved")
+        self.assertIn(r["msg"], ["Saved", "Saved."])
 
         # set settings without password
         r = self.api.set_settings(**expected_settings)
-        self.assertEqual(r["msg"], "Saved")
+        self.assertIn(r["msg"], ["Saved", "Saved."])
 
         # get settings
         settings = self.api.get_settings()
@@ -38,7 +39,7 @@ class TestSettings(UptimeKumaTestCase):
 
         # change password
         r = self.api.change_password(self.password, new_password)
-        self.assertEqual(r["msg"], "Password has been updated successfully.")
+        self.assertIn(r["msg"], ["Password has been updated successfully.", "successAuthChangePassword"])
 
         # check login
         r = self.api.login(self.username, new_password)
@@ -46,8 +47,13 @@ class TestSettings(UptimeKumaTestCase):
 
         # restore password
         r = self.api.change_password(new_password, self.password)
-        self.assertEqual(r["msg"], "Password has been updated successfully.")
+        self.assertIn(r["msg"], ["Password has been updated successfully.", "successAuthChangePassword"])
 
+        # refresh global token since password change invalidates the session in v2
+        r = self.api.login(self.username, self.password)
+        uptime_kuma_test_case.token = r["token"]
+
+    @unittest.skip("uploadBackup socket event removed in Uptime Kuma v2")
     def test_upload_backup(self):
         data = {
             "version": "1.17.1",
@@ -57,7 +63,7 @@ class TestSettings(UptimeKumaTestCase):
         }
         data_str = json.dumps(data)
         r = self.api.upload_backup(data_str, "overwrite")
-        self.assertEqual(r["msg"], "Backup successfully restored.")
+        self.assertIn(r["msg"], ["Backup successfully restored.", "successBackupRestored"])
 
 
 if __name__ == '__main__':

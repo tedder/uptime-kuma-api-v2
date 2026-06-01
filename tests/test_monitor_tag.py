@@ -17,7 +17,7 @@ class TestMonitorTag(UptimeKumaTestCase):
 
         # add monitor tag
         r = self.api.add_monitor_tag(**expected_monitor_tag)
-        self.assertEqual(r["msg"], "Added Successfully.")
+        self.assertIn(r["msg"], ["Added Successfully.", "successAdded"])
 
         # check if tag is listed in monitor tags
         monitors = self.api.get_monitors()
@@ -26,7 +26,7 @@ class TestMonitorTag(UptimeKumaTestCase):
 
         # delete monitor tag
         r = self.api.delete_monitor_tag(**expected_monitor_tag)
-        self.assertEqual(r["msg"], "Deleted Successfully.")
+        self.assertIn(r["msg"], ["Deleted Successfully.", "successDeleted"])
 
         # check if tag is not listed in monitor tags
         monitors = self.api.get_monitors()
