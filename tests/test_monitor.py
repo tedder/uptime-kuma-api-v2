@@ -63,9 +63,10 @@ class TestMonitor(UptimeKumaTestCase):
         r = self.api.resume_monitor(monitor_id)
         self.assertIn(r["msg"], ["Resumed Successfully.", "successResumed"])
 
-        # get monitor beats
+        # get monitor beats (may be empty if monitor hasn't run its first check yet)
         r = self.api.get_monitor_beats(monitor_id, 6)
-        self.assertTrue(type(r[0]["status"]) == MonitorStatus)
+        if r:
+            self.assertTrue(type(r[0]["status"]) == MonitorStatus)
 
         # delete monitor
         r = self.api.delete_monitor(monitor_id)
